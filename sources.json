@@ -1,0 +1,44 @@
+{
+  "sources": [
+    {
+      "id": "go_tokyo",
+      "name": "GO TOKYO Official Calendar",
+      "category": "mixed",
+      "enabled": true,
+      "type": "go_tokyo_calendar",
+      "url": "https://www.gotokyo.org/en/calendar/index.html"
+    },
+    {
+      "id": "tobikan",
+      "name": "Tokyo Metropolitan Art Museum",
+      "category": "exhibitions",
+      "enabled": true,
+      "type": "tobikan_exhibitions",
+      "url": "https://www.tobikan.jp/en/exhibition/index.html"
+    },
+    {
+      "id": "mori_art_museum",
+      "name": "Mori Art Museum",
+      "category": "exhibitions",
+      "enabled": true,
+      "type": "mori_known_events",
+      "url": "https://www.mori.art.museum/en/exhibitions/"
+    },
+    {
+      "id": "mori_arts_center_gallery",
+      "name": "Mori Arts Center Gallery",
+      "category": "exhibitions",
+      "enabled": true,
+      "type": "mori_known_events",
+      "url": "https://macg.roppongihills.com/en/exhibitions/"
+    },
+    {
+      "id": "tokyo_city_view",
+      "name": "Tokyo City View",
+      "category": "pop_culture",
+      "enabled": true,
+      "type": "mori_known_events",
+      "url": "https://tcv.roppongihills.com/en/exhibitions/"
+    }
+  ]
+}
