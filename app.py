@@ -28,7 +28,6 @@ import html
 import traceback
 from pathlib import Path
 
-import pandas as pd
 import streamlit as st
 
 from config import (
@@ -45,9 +44,6 @@ from utils.output_utils import (
     events_to_csv_text,
     sections_to_markdown,
     events_to_ics_text,
-    save_csv,
-    save_markdown,
-    save_ics,
 )
 
 
@@ -719,10 +715,59 @@ def inject_css() -> None:
             background: rgba(255, 253, 248, 0.58);
         }
 
-        [data-testid="stDataFrame"] {
+        .maintenance-table-wrap {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 0.65rem;
             border: 1px solid #ddd3c6;
             border-radius: 14px;
-            overflow: hidden;
+            background: #fffdf8;
+        }
+
+        .maintenance-table {
+            width: 100%;
+            min-width: 760px;
+            border-collapse: collapse;
+            color: #514a41;
+            font-size: 0.84rem;
+            line-height: 1.5;
+        }
+
+        .maintenance-table th {
+            padding: 0.75rem 0.85rem;
+            border-bottom: 1px solid #d8cbbb;
+            background: #f2ece2;
+            color: #63594d;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .maintenance-table td {
+            max-width: 320px;
+            padding: 0.72rem 0.85rem;
+            border-bottom: 1px solid #ebe3d8;
+            background: #fffdf8;
+            color: #514a41;
+            text-align: left;
+            vertical-align: top;
+            overflow-wrap: anywhere;
+        }
+
+        .maintenance-table tbody tr:nth-child(even) td {
+            background: #fbf7f0;
+        }
+
+        .maintenance-table tbody tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .maintenance-table-empty {
+            padding: 1rem;
+            color: #81776b;
+            font-size: 0.86rem;
         }
 
         @media (max-width: 700px) {
@@ -980,6 +1025,76 @@ def render_sections(sections) -> None:
             render_event_card(event)
 
 
+def build_light_table_html(rows: list[dict], columns: list[str]) -> str:
+    """
+    把维护信息转换成经过转义的浅色 HTML 表格。
+    """
+    header_html = "".join(
+        f"<th>{html.escape(str(column))}</th>"
+        for column in columns
+    )
+
+    if rows:
+        body_html = "".join(
+            "<tr>"
+            + "".join(
+                f"<td>{html.escape(str(row.get(column, '') or '—'))}</td>"
+                for column in columns
+            )
+            + "</tr>"
+            for row in rows
+        )
+    else:
+        body_html = (
+            f'<tr><td class="maintenance-table-empty" colspan="{len(columns)}">'
+            "暂无数据"
+            "</td></tr>"
+        )
+
+    return (
+        '<div class="maintenance-table-wrap">'
+        '<table class="maintenance-table">'
+        f"<thead><tr>{header_html}</tr></thead>"
+        f"<tbody>{body_html}</tbody>"
+        "</table>"
+        "</div>"
+    )
+
+
+def render_light_table(rows: list[dict], columns: list[str]) -> None:
+    st.html(build_light_table_html(rows, columns))
+
+
+def render_source_statuses(source_statuses: list[dict]) -> None:
+    """
+    在结果底部以低干扰折叠区展示本次来源抓取状态。
+    """
+    if not source_statuses:
+        return
+
+    status_labels = {
+        "success": "成功",
+        "failed": "失败",
+        "skipped": "跳过",
+    }
+    rows = [
+        {
+            "来源 ID": status["source_id"],
+            "来源名称": status["source_name"],
+            "类别": status["category"],
+            "已启用": "是" if status["enabled"] else "否",
+            "状态": status_labels.get(status["status"], status["status"]),
+            "返回数量": status["event_count"],
+            "最近错误摘要": status["last_error"] or "—",
+        }
+        for status in source_statuses
+    ]
+
+    with st.expander("来源状态"):
+        st.caption("显示本次生成时各来源的调用结果；详细错误仍记录在终端和日志中。")
+        render_light_table(rows, list(rows[0].keys()))
+
+
 def render_sidebar_settings() -> dict:
     """
     作用：
@@ -1095,7 +1210,7 @@ def main() -> None:
                 try:
                     logger.info("开始生成文化简报。")
 
-                    events, fetch_errors = collect_events(
+                    events, fetch_errors, source_statuses = collect_events(
                         days_ahead=settings["days_ahead"],
                         selected_categories=settings["selected_categories"],
                     )
@@ -1127,8 +1242,11 @@ def main() -> None:
                         render_sections(sections)
 
                         st.markdown("---")
-                        st.subheader("下载与保存")
-                        st.caption("导出功能放在简报末尾，不影响前面的阅读体验。")
+                        st.subheader("下载")
+                        st.caption(
+                            "需要时可以下载当前结果。"
+                            "下载不会自动写入项目 output 文件夹。"
+                        )
 
                         csv_text = events_to_csv_text(enriched_events)
                         md_text = sections_to_markdown(sections)
@@ -1160,23 +1278,7 @@ def main() -> None:
                                 mime="text/calendar",
                             )
 
-                        saved_paths = [
-                            save_csv(enriched_events),
-                            save_markdown(sections),
-                            save_ics(enriched_events),
-                        ]
-
-                        if saved_paths:
-                            render_editorial_notice(
-                                "文件已保存到 output 文件夹。",
-                                "info",
-                            )
-                            for path in saved_paths:
-                                st.code(str(path))
-
-                        with st.expander("原始数据预览"):
-                            st.dataframe(pd.DataFrame([event.to_dict() for event in enriched_events]))
-
+                    render_source_statuses(source_statuses)
                     logger.info("文化简报生成完成。")
 
                 except Exception:

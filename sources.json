@@ -39,6 +39,14 @@
       "enabled": true,
       "type": "mori_known_events",
       "url": "https://tcv.roppongihills.com/en/exhibitions/"
+    },
+    {
+      "id": "aoyama_book_center",
+      "name": "Aoyama Book Center 活动与讲座",
+      "category": "bookstore_events",
+      "enabled": true,
+      "type": "aoyama_bookstore_events",
+      "url": "https://aoyamabc.jp/collections/event"
     }
   ]
 }

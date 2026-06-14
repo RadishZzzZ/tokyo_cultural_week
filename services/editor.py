@@ -68,13 +68,16 @@ def assign_tags(event: Event) -> List[str]:
         "local_events": "🚶 可以顺路散步",
         "performing_arts": "🎭 舞台 / 表演",
         "pop_culture": "🎮 亚文化相关",
-        "bookstore_events": "📚 偏知识型",
+        "bookstore_events": "📚 书店活动",
         "music": "🎵 音乐",
         "other": "✨ 其他",
     }
 
     if event.category in category_base_tags:
         tags.append(category_base_tags[event.category])
+
+    if event.category == "bookstore_events":
+        tags.append("💬 小规模活动")
 
     for tag, keywords in TAG_KEYWORDS.items():
         for keyword in keywords:
@@ -213,6 +216,12 @@ def generate_recommendation_reason(event: Event) -> str:
         return "适合放进城市散步路线里，不一定要专程前往，但很适合作为顺路发现。"
 
     if event.category == "bookstore_events":
+        if "サイン会" in event.title:
+            return "适合想参加签售、近距离接触作者或创作者的书籍爱好者，也可以顺便留意这次刊行背后的作品。"
+        if "トークイベント" in event.title:
+            return "以作者或创作者对谈为主，适合想听现场交流、了解书中观点与创作过程的人。"
+        if "刊行記念" in event.title or "出版記念" in event.title:
+            return "围绕新书出版展开，可以从作者与创作者背景进入作品，也适合关注近期出版话题的人。"
         return "适合喜欢书店、作者分享和小规模交流的人。比大型活动更安静，也更容易留下思考余味。"
 
     if event.category == "lectures":

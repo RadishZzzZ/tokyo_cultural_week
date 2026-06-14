@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from models import Event
+from fetchers.bookstore_events import fetch_aoyama_bookstore_events
 from fetchers.go_tokyo import fetch_go_tokyo_events
 from fetchers.mori import fetch_mori_source
 from fetchers.tobikan import fetch_tobikan_exhibitions
@@ -31,6 +32,7 @@ def fetch_tobikan_source(source: SourceConfig, days_ahead: int) -> list[Event]:
 
 
 FETCHER_REGISTRY: dict[str, SourceFetcher] = {
+    "aoyama_bookstore_events": fetch_aoyama_bookstore_events,
     "go_tokyo_calendar": fetch_go_tokyo_source,
     "tobikan_exhibitions": fetch_tobikan_source,
     "mori_known_events": fetch_mori_source,
